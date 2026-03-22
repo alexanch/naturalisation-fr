@@ -9,13 +9,50 @@ from scipy.stats import norm
 from dash import Dash, html, dcc, Output, Input, no_update, ctx
 import dash_bootstrap_components as dbc
 
+# Department names
+DEPT_NAMES = {
+    "01": "Ain", "02": "Aisne", "03": "Allier", "04": "Alpes-de-Haute-Provence",
+    "05": "Hautes-Alpes", "06": "Alpes-Maritimes", "07": "Ardèche", "08": "Ardennes",
+    "09": "Ariège", "10": "Aube", "11": "Aude", "12": "Aveyron",
+    "13": "Bouches-du-Rhône", "14": "Calvados", "15": "Cantal", "16": "Charente",
+    "17": "Charente-Maritime", "18": "Cher", "19": "Corrèze", "21": "Côte-d'Or",
+    "22": "Côtes-d'Armor", "23": "Creuse", "24": "Dordogne", "25": "Doubs",
+    "26": "Drôme", "27": "Eure", "28": "Eure-et-Loir", "29": "Finistère",
+    "2A": "Corse-du-Sud", "2B": "Haute-Corse", "30": "Gard", "31": "Haute-Garonne",
+    "32": "Gers", "33": "Gironde", "34": "Hérault", "35": "Ille-et-Vilaine",
+    "36": "Indre", "37": "Indre-et-Loire", "38": "Isère", "39": "Jura",
+    "40": "Landes", "41": "Loir-et-Cher", "42": "Loire", "43": "Haute-Loire",
+    "44": "Loire-Atlantique", "45": "Loiret", "46": "Lot", "47": "Lot-et-Garonne",
+    "48": "Lozère", "49": "Maine-et-Loire", "50": "Manche", "51": "Marne",
+    "52": "Haute-Marne", "53": "Mayenne", "54": "Meurthe-et-Moselle", "55": "Meuse",
+    "56": "Morbihan", "57": "Moselle", "58": "Nièvre", "59": "Nord",
+    "60": "Oise", "61": "Orne", "62": "Pas-de-Calais", "63": "Puy-de-Dôme",
+    "64": "Pyrénées-Atlantiques", "65": "Hautes-Pyrénées", "66": "Pyrénées-Orientales",
+    "67": "Bas-Rhin", "68": "Haut-Rhin", "69": "Rhône", "70": "Haute-Saône",
+    "71": "Saône-et-Loire", "72": "Sarthe", "73": "Savoie", "74": "Haute-Savoie",
+    "75": "Paris", "76": "Seine-Maritime", "77": "Seine-et-Marne", "78": "Yvelines",
+    "79": "Deux-Sèvres", "80": "Somme", "81": "Tarn", "82": "Tarn-et-Garonne",
+    "83": "Var", "84": "Vaucluse", "85": "Vendée", "86": "Vienne",
+    "87": "Haute-Vienne", "88": "Vosges", "89": "Yonne",
+    "90": "Territoire de Belfort", "91": "Essonne", "92": "Hauts-de-Seine",
+    "93": "Seine-Saint-Denis", "94": "Val-de-Marne", "95": "Val-d'Oise",
+    "971": "Guadeloupe", "972": "Martinique", "973": "Guyane",
+    "974": "La Réunion", "976": "Mayotte", "99": "Étranger",
+    "02A": "Corse-du-Sud", "02B": "Haute-Corse", "020": "Corse",
+}
+
+
+def dept_label(code):
+    name = DEPT_NAMES.get(code, "")
+    return f"{code} {name}" if name else code
+
+
 # Colors
 PALETTE = [
     "#4fc3f7", "#ffb74d", "#66bb6a", "#ef5350", "#ce93d8",
     "#4db6ac", "#ff8a65", "#9575cd", "#aed581", "#e57373",
     "#64b5f6", "#ffd54f", "#81c784", "#f06292", "#ba68c8",
 ]
-PALETTE_FILL = [c + "1f" for c in PALETTE]  # won't work for hex, handle below
 COHORT_COLORS = {"2023": "#ce93d8", "2024": "#4fc3f7", "2025": "#66bb6a"}
 BG = "#0a0a14"
 CARD_BG = "#111827"
@@ -38,7 +75,7 @@ ALL_MONTHS_FULL = pd.period_range("2024-01", "2026-03", freq="M").astype(str).to
 
 # Build department options sorted by count
 dept_counts = df_nat_full["dept"].value_counts()
-DEPT_OPTIONS = [{"label": f"dép. {d} ({n:,} NAT)", "value": d}
+DEPT_OPTIONS = [{"label": f"{dept_label(d)} ({n:,} NAT)", "value": d}
                 for d, n in dept_counts.items() if n >= 10]
 DEFAULT_DEPTS = ["075", "078"]
 
@@ -107,7 +144,7 @@ def make_timeseries(depts, serie_year=None, title=""):
         monthly = monthly.reindex(ALL_MONTHS, fill_value=0)
         col = get_color(i)
         fig.add_trace(go.Bar(
-            x=ALL_MONTHS, y=monthly.values, name=f"dép. {dept}",
+            x=ALL_MONTHS, y=monthly.values, name=dept_label(dept),
             marker_color=col, opacity=0.7, marker_line=dict(width=0),
             text=[str(v) if v > 0 else "" for v in monthly.values],
             textposition="outside", textfont=dict(size=8, color=TEXT_DIM),
@@ -158,6 +195,49 @@ CARD_STYLE = {"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}",
 
 # Build app
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+
+# Dark dropdown styling
+app.index_string = '''<!DOCTYPE html>
+<html>
+<head>
+{%metas%}
+<title>Naturalisation Analytics</title>
+{%favicon%}
+{%css%}
+<style>
+.Select-control, .Select-menu-outer, .Select-option,
+.VirtualizedSelectOption, .Select-value-label,
+.Select-placeholder, .Select-input > input {
+    background-color: #111827 !important;
+    color: #e2e8f0 !important;
+    border-color: #1e293b !important;
+}
+.Select-option.is-focused {
+    background-color: #1e293b !important;
+}
+.Select-multi-value-wrapper .Select-value {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #e2e8f0 !important;
+}
+.Select-value-icon:hover {
+    background-color: #334155 !important;
+    color: #ef5350 !important;
+}
+.dash-dropdown .Select-menu-outer {
+    background-color: #111827 !important;
+}
+</style>
+</head>
+<body>
+{%app_entry%}
+<footer>
+{%config%}
+{%scripts%}
+{%renderer%}
+</footer>
+</body>
+</html>'''
 
 app.layout = html.Div([
     # Header
