@@ -159,6 +159,11 @@ def section_title(text):
                            "paddingBottom": "8px"})
 
 
+def note(text):
+    return html.P(text, style={"color": TEXT_DIM, "fontSize": "12px", "fontStyle": "italic",
+                               "margin": "4px 8px 16px", "lineHeight": "1.5"})
+
+
 # Build app
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
@@ -186,36 +191,70 @@ app.layout = html.Div([
         # Gaussian distributions
         section_title("Wait Time Distributions"),
         dbc.Row([
-            dbc.Col(dbc.Card(dcc.Graph(figure=make_gaussian(df_nat, 2024, "2024X Dossiers"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
-            dbc.Col(dbc.Card(dcc.Graph(figure=make_gaussian(df_nat, 2025, "2025X Dossiers (incomplete)"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
+            dbc.Col([
+                dbc.Card(dcc.Graph(figure=make_gaussian(df_nat, 2024, "2024X Dossiers"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note(f"Entries < 6mo excluded (likely re-filed old dossiers). "
+                     f"Paris (n={stats[2024].get('075', {}).get('n', 0):,}, median {stats[2024].get('075', {}).get('median', 0):.0f}mo): reliable — 95% of Jan-Mar 2026 output is 2024X. "
+                     f"Yvelines (n={stats[2024].get('078', {}).get('n', 0):,}, median {stats[2024].get('078', {}).get('median', 0):.0f}mo): UNRELIABLE — only fast-track pipeline dossiers. "
+                     f"Yvelines still processing 2023X in 2026; slow-pipeline 2024X not yet published."),
+            ], md=6),
+            dbc.Col([
+                dbc.Card(dcc.Graph(figure=make_gaussian(df_nat, 2025, "2025X Dossiers (incomplete)"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note(f"2025X is barely started — only {stats[2025].get('075', {}).get('n', 0)} Paris + {stats[2025].get('078', {}).get('n', 0)} Yvelines entries so far. "
+                     f"Distribution is right-censored (only fastest cases visible). Not usable for prediction."),
+            ], md=6),
         ], className="g-3"),
         dbc.Row([
-            dbc.Col(dbc.Card(dcc.Graph(figure=make_gaussian(df_nat, title="All Dossiers Combined"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=12),
+            dbc.Col([
+                dbc.Card(dcc.Graph(figure=make_gaussian(df_nat, title="All Dossiers Combined"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note("Combined 2023X + 2024X + 2025X. Mixes cohorts with different processing speeds. "
+                     "For Paris: use the 2024X Gaussian. For Yvelines: no reliable Gaussian yet."),
+            ], md=12),
         ], className="g-3 mt-1"),
 
         # Time series
         section_title("Monthly Processing Volume — click a bar to view entries"),
         dbc.Row([
-            dbc.Col(dbc.Card(dcc.Graph(id="ts-all", figure=make_timeseries(df_nat, title="All NAT Dossiers"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=12),
+            dbc.Col([
+                dbc.Card(dcc.Graph(id="ts-all", figure=make_timeseries(df_nat, title="All NAT Dossiers"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note("Monthly NAT volume (wait >= 6mo). Sep-Dec 2024 drought is real and nationwide — not a data gap. "
+                     "Paris publishes 3-5x more dossiers per month than Yvelines."),
+            ], md=12),
         ], className="g-3"),
         dbc.Row([
-            dbc.Col(dbc.Card(dcc.Graph(id="ts-2024", figure=make_timeseries(df_nat, 2024, "2024X Dossiers"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
-            dbc.Col(dbc.Card(dcc.Graph(id="ts-2025", figure=make_timeseries(df_nat, 2025, "2025X Dossiers"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
+            dbc.Col([
+                dbc.Card(dcc.Graph(id="ts-2024", figure=make_timeseries(df_nat, 2024, "2024X Dossiers"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note("Paris 2024X ramped up from Jul 2025 and dominates by Jan 2026 (95% of output). "
+                     "Yvelines 2024X peaked briefly in late 2024 then dropped — most still in slow pipeline."),
+            ], md=6),
+            dbc.Col([
+                dbc.Card(dcc.Graph(id="ts-2025", figure=make_timeseries(df_nat, 2025, "2025X Dossiers"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note("Very few 2025X published. These are mostly low serie numbers (first dossiers filed Jan 2025). "
+                     "Bulk 2025X processing not expected until late 2026 at earliest."),
+            ], md=6),
         ], className="g-3 mt-1"),
 
         # Stacked bars
         section_title("Cohort Breakdown by Month (all data, no filter)"),
         dbc.Row([
-            dbc.Col(dbc.Card(dcc.Graph(figure=make_stacked("075", "Paris (075)"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
-            dbc.Col(dbc.Card(dcc.Graph(figure=make_stacked("078", "Yvelines (078)"), config={"displayModeBar": False}),
-                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
+            dbc.Col([
+                dbc.Card(dcc.Graph(figure=make_stacked("075", "Paris (075)"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note("Clear transition: 2023X -> 2024X around Jul 2025. 2025X barely visible. "
+                     "Two numbering tracks: short numbers (<10k, fast) and 6-digit (200k+, slow ~22mo)."),
+            ], md=6),
+            dbc.Col([
+                dbc.Card(dcc.Graph(figure=make_stacked("078", "Yvelines (078)"), config={"displayModeBar": False}),
+                         style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}),
+                note("2023X still dominant even in Mar 2026. 2024X only appears in bursts. "
+                     "Yvelines 2024X is 96% short numbers (fast track) — 6-digit slow pipeline hasn't started publishing."),
+            ], md=6),
         ], className="g-3"),
 
         html.Div(style={"height": "40px"}),
