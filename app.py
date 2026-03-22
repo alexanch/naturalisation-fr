@@ -400,25 +400,29 @@ def update_charts(selected_depts):
 
     depts = selected_depts
 
-    # KPI cards
-    cards = []
+    # KPI cards — row per cohort year
     df_filtered = df_nat_full[df_nat_full["wait_months"] >= MIN_WAIT]
-    for dept in depts:
-        for sy in [2024, 2025]:
+    md_size = max(2, 12 // max(len(depts), 1))
+    kpi_rows = []
+    for sy in [2024, 2025]:
+        row_cards = []
+        for dept in depts:
             s = df_filtered[(df_filtered["dept"] == dept) & (df_filtered["serie_year"] == sy)]
             if len(s) >= 3:
                 v = s["wait_months"]
-                cards.append(dbc.Col(
+                row_cards.append(dbc.Col(
                     dbc.Card(dbc.CardBody([
-                        html.P(f"{sy}X dép. {dept}", className="mb-1",
+                        html.P(f"{sy}X {dept_label(dept)}", className="mb-1",
                                style={"color": TEXT_DIM, "fontSize": "11px", "textTransform": "uppercase", "letterSpacing": "1px"}),
                         html.H4(f"{v.mean():.1f} mo", className="mb-0", style={"color": TEXT, "fontWeight": "600"}),
                         html.Small(f"n={len(s):,}  median={v.median():.1f}", style={"color": TEXT_DIM}),
                     ], className="p-3"),
                     style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px"}),
-                    md=max(2, 12 // max(len(depts) * 2, 1)),
+                    md=md_size,
                 ))
-    kpi_row = dbc.Row(cards, className="mt-3 mb-3 g-3") if cards else html.Div()
+        if row_cards:
+            kpi_rows.append(dbc.Row(row_cards, className="mt-2 g-3"))
+    kpi_row = html.Div(kpi_rows, className="mb-3") if kpi_rows else html.Div()
 
     # Gaussians
     g2024 = make_gaussian(depts, 2024, "2024X Dossiers")
