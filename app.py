@@ -43,8 +43,9 @@ DEPT_NAMES = {
 
 
 def dept_label(code):
-    name = DEPT_NAMES.get(code, "")
-    return f"{code} {name}" if name else code
+    short = code.lstrip("0") or "0"
+    name = DEPT_NAMES.get(code, "") or DEPT_NAMES.get(short, "")
+    return f"{short} {name}" if name else short
 
 
 # Colors
@@ -196,7 +197,7 @@ CARD_STYLE = {"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}",
 # Build app
 app = Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
-# Dark dropdown styling
+# Dark dropdown styling for Dash 4.x
 app.index_string = '''<!DOCTYPE html>
 <html>
 <head>
@@ -205,27 +206,89 @@ app.index_string = '''<!DOCTYPE html>
 {%favicon%}
 {%css%}
 <style>
-.Select-control, .Select-menu-outer, .Select-option,
-.VirtualizedSelectOption, .Select-value-label,
-.Select-placeholder, .Select-input > input {
+/* Dash 4.x dropdown */
+.dash-dropdown .Select-control {
     background-color: #111827 !important;
+    border-color: #1e293b !important;
     color: #e2e8f0 !important;
+}
+.dash-dropdown .Select-menu-outer {
+    background-color: #111827 !important;
     border-color: #1e293b !important;
 }
-.Select-option.is-focused {
+.dash-dropdown .Select-option {
+    background-color: #111827 !important;
+    color: #e2e8f0 !important;
+}
+.dash-dropdown .Select-option.is-focused,
+.dash-dropdown .Select-option:hover {
     background-color: #1e293b !important;
 }
-.Select-multi-value-wrapper .Select-value {
+.dash-dropdown .Select-value {
     background-color: #1e293b !important;
     border-color: #334155 !important;
     color: #e2e8f0 !important;
 }
-.Select-value-icon:hover {
+.dash-dropdown .Select-value-label {
+    color: #e2e8f0 !important;
+}
+.dash-dropdown .Select-placeholder,
+.dash-dropdown .Select-input > input {
+    color: #94a3b8 !important;
+}
+.dash-dropdown .Select-clear-zone,
+.dash-dropdown .Select-arrow-zone {
+    color: #94a3b8 !important;
+}
+.dash-dropdown .Select-value-icon {
+    border-right-color: #334155 !important;
+}
+.dash-dropdown .Select-value-icon:hover {
     background-color: #334155 !important;
     color: #ef5350 !important;
 }
-.dash-dropdown .Select-menu-outer {
+/* Also handle newer class names */
+.dash-dropdown input {
+    color: #e2e8f0 !important;
+}
+.dash-dropdown [class*="menu"] {
     background-color: #111827 !important;
+}
+.dash-dropdown [class*="option"] {
+    background-color: #111827 !important;
+    color: #e2e8f0 !important;
+}
+.dash-dropdown [class*="option"]:hover,
+.dash-dropdown [class*="option"][class*="focused"] {
+    background-color: #1e293b !important;
+}
+.dash-dropdown [class*="control"] {
+    background-color: #111827 !important;
+    border-color: #1e293b !important;
+}
+.dash-dropdown [class*="singleValue"],
+.dash-dropdown [class*="multiValue"] {
+    color: #e2e8f0 !important;
+}
+.dash-dropdown [class*="multiValue"] {
+    background-color: #1e293b !important;
+}
+.dash-dropdown [class*="multiValueLabel"] {
+    color: #e2e8f0 !important;
+}
+.dash-dropdown [class*="multiValueRemove"]:hover {
+    background-color: #334155 !important;
+    color: #ef5350 !important;
+}
+.dash-dropdown [class*="placeholder"] {
+    color: #94a3b8 !important;
+}
+.dash-dropdown [class*="indicatorSeparator"] {
+    background-color: #1e293b !important;
+}
+.dash-dropdown [class*="dropdownIndicator"],
+.dash-dropdown [class*="clearIndicator"] {
+    color: #94a3b8 !important;
 }
 </style>
 </head>
