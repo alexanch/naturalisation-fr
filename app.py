@@ -330,21 +330,20 @@ app.layout = html.Div([
         # KPI cards
         html.Div(id="kpi-cards"),
 
-        # Gaussian distributions
-        section_title("Wait Time Distributions (wait >= 6mo)"),
-        dbc.Row([
-            dbc.Col([dcc.Graph(id="gauss-2024", config={"displayModeBar": False})], md=6),
-            dbc.Col([dcc.Graph(id="gauss-2025", config={"displayModeBar": False})], md=6),
-        ], className="g-3"),
-        note("Entries < 6mo excluded (likely re-filed old dossiers). "
-             "2025X is incomplete — only fastest cases visible, not usable for prediction. "
-             "Check stacked bars below to assess if a department's 2024X distribution is complete."),
+        # 1. All dossiers combined
+        section_title("All Dossiers Combined (wait >= 6mo)"),
         dbc.Row([
             dbc.Col([dcc.Graph(id="gauss-all", config={"displayModeBar": False})], md=12),
-        ], className="g-3 mt-1"),
+        ], className="g-3"),
         note("Combined 2023X + 2024X + 2025X. Mixes cohorts with different processing speeds."),
 
-        # Time series
+        # 2. Cohort breakdown
+        section_title("Cohort Breakdown by Month (all data, no filter)"),
+        html.Div(id="stacked-bars"),
+        note("Shows 2023X/2024X/2025X mix per month. Use this to assess if a department "
+             "has finished 2023X processing and whether 2024X data is complete enough for the Gaussian."),
+
+        # 3. Monthly processing volume
         section_title("Monthly Processing Volume — click a bar to view entries"),
         dbc.Row([
             dbc.Col([dcc.Graph(id="ts-all", config={"displayModeBar": False})], md=12),
@@ -357,11 +356,15 @@ app.layout = html.Div([
         note("2024X: check if department has transitioned from 2023X (see stacked bars). "
              "2025X: very few published — bulk processing not expected until late 2026."),
 
-        # Stacked bars
-        section_title("Cohort Breakdown by Month (all data, no filter)"),
-        html.Div(id="stacked-bars"),
-        note("Shows 2023X/2024X/2025X mix per month. Use this to assess if a department "
-             "has finished 2023X processing and whether 2024X data is complete enough for the Gaussian."),
+        # 4. Wait time distributions
+        section_title("Wait Time Distributions (wait >= 6mo)"),
+        dbc.Row([
+            dbc.Col([dcc.Graph(id="gauss-2024", config={"displayModeBar": False})], md=6),
+            dbc.Col([dcc.Graph(id="gauss-2025", config={"displayModeBar": False})], md=6),
+        ], className="g-3"),
+        note("Entries < 6mo excluded (likely re-filed old dossiers). "
+             "2025X is incomplete — only fastest cases visible, not usable for prediction. "
+             "Check stacked bars above to assess if a department's 2024X distribution is complete."),
 
         html.Div(style={"height": "40px"}),
     ], fluid=True),
