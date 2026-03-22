@@ -109,6 +109,39 @@ def make_timeseries(df, serie_year=None, title=""):
     return fig
 
 
+COHORT_COLORS = {"2023": "#ce93d8", "2024": "#4fc3f7", "2025": "#66bb6a"}
+ALL_MONTHS_FULL = pd.period_range("2024-01", "2026-03", freq="M").astype(str).tolist()
+
+# Unfiltered NAT for stacked bars
+df_nat_unfiltered = df_all[df_all["nat_type"] == "NAT"].copy()
+df_nat_unfiltered["pub_date_dt"] = pd.to_datetime(df_nat_unfiltered["pub_date"])
+df_nat_unfiltered["month"] = df_nat_unfiltered["pub_date_dt"].dt.to_period("M").astype(str)
+
+
+def make_stacked(dept_code, dept_name):
+    fig = go.Figure()
+    sub = df_nat_unfiltered[(df_nat_unfiltered["dept"] == dept_code) &
+                            (df_nat_unfiltered["pub_date_dt"] >= "2024-01-01")]
+
+    for year in [2023, 2024, 2025]:
+        ys = sub[sub["serie_year"] == year]
+        monthly = ys.groupby("month").size().reindex(ALL_MONTHS_FULL, fill_value=0)
+        fig.add_trace(go.Bar(
+            x=ALL_MONTHS_FULL, y=monthly.values, name=f"{year}X",
+            marker_color=COHORT_COLORS[str(year)], opacity=0.8,
+            text=[str(v) if v > 5 else "" for v in monthly.values],
+            textposition="inside", textfont=dict(size=8),
+        ))
+
+    fig.update_layout(**LAYOUT_COMMON,
+                      title=dict(text=f"{dept_name} — cohort breakdown (all data)", font=dict(size=14)),
+                      xaxis_title="", yaxis_title="Dossiers",
+                      barmode="stack", height=350,
+                      xaxis=dict(tickangle=-45, type="category"),
+                      bargap=0.15)
+    return fig
+
+
 def stat_card(label, value, sub=""):
     return dbc.Card(
         dbc.CardBody([
@@ -175,6 +208,15 @@ app.layout = html.Div([
             dbc.Col(dbc.Card(dcc.Graph(id="ts-2025", figure=make_timeseries(df_nat, 2025, "2025X Dossiers"), config={"displayModeBar": False}),
                              style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
         ], className="g-3 mt-1"),
+
+        # Stacked bars
+        section_title("Cohort Breakdown by Month (all data, no filter)"),
+        dbc.Row([
+            dbc.Col(dbc.Card(dcc.Graph(figure=make_stacked("075", "Paris (075)"), config={"displayModeBar": False}),
+                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
+            dbc.Col(dbc.Card(dcc.Graph(figure=make_stacked("078", "Yvelines (078)"), config={"displayModeBar": False}),
+                             style={"backgroundColor": CARD_BG, "border": f"1px solid {ACCENT}", "borderRadius": "8px", "overflow": "hidden"}), md=6),
+        ], className="g-3"),
 
         html.Div(style={"height": "40px"}),
     ], fluid=True),
