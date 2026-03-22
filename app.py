@@ -235,6 +235,10 @@ def on_bar_click(click_all, click_2024, click_2025):
     return True, title, table
 
 
+server = app.server  # for gunicorn
+
 if __name__ == "__main__":
-    print("Dashboard: http://localhost:8050")
-    app.run(debug=True, port=8050)
+    import os
+    port = int(os.environ.get("PORT", 8050))
+    print(f"Dashboard: http://localhost:{port}")
+    app.run(debug=False, host="0.0.0.0", port=port)
